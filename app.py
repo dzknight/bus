@@ -16,6 +16,7 @@ app = Flask(
     __name__,
     template_folder=os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
 )
+app.secret_key = 'super-secret-key-for-session-management'  # CSRF 보호를 위한 시크릿 키 설정
 app.register_blueprint(teams_bp)
 app.register_blueprint(auth_bp)
 app.register_blueprint(bus_bp)
@@ -25,50 +26,6 @@ API_KEY = "Q87H6RHMmHu5VIe9CJqbwVioFAV+HE/319+CbDQqB6HgCx8sp4nZafCs+X5eFeY31zuCs
 BASE = "http://apis.data.go.kr/6410000/busrouteservice/v2"
 # 데이터베이스 초기화 (CloudType 사용)
 db = UserDatabase(use_cloud=True)
-
-@app.before_request
-def load_logged_in_user():
-    """모든 요청 전에 로그인된 사용자 정보를 로드"""
-    user_id = session.get('user_id')
-    
-    if user_id is None:
-        g.user = None
-    else:
-        try:
-            g.user = db.get_user_by_id(user_id)
-        except Exception as e:
-            print(f"데이터베이스 연결 오류: {e}")
-            g.user = None
-            session.clear()  # 오류 시 세션 초기화
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    """로그인 페이지"""
-    form = LoginForm()
-    
-    if form.validate_on_submit():
-        user = db.authenticate_user(form.username.data, form.password.data)
-        if user:
-            session.clear()
-            session['user_id'] = user['id']
-            flash(f'{user["full_name"]}님, 환영합니다!', 'success')
-            return redirect(url_for('home'))
-        else:
-            flash('사용자명 또는 비밀번호가 올바르지 않습니다.', 'error')
-    
-    return render_template('login.html', form=form)
-
-@app.route('/logout')
-def logout():
-    """로그아웃"""
-    if g.user:
-        flash(f'{g.user["full_name"]}님, 안전하게 로그아웃되었습니다.', 'info')
-    session.clear()
-    return redirect(url_for('home'))
-
-@app.route('/')
-def home():
-    return render_template('home.html')
 
 @app.route('/api/bus', methods=['GET'])
 def get_bus():

@@ -17,7 +17,7 @@ class AuthController:
                 session.clear()
                 session['user_id'] = user['id']
                 flash(f'{user["full_name"]}님, 환영합니다!', 'success')
-                return 'home'
+                return 'main.home'
             else:
                 flash('사용자명 또는 비밀번호가 올바르지 않습니다.', 'error')
         
@@ -25,10 +25,10 @@ class AuthController:
     
     def logout(self) -> str:
         """로그아웃 처리"""
-        if g.user:
+        if hasattr(g, 'user') and g.user:
             flash(f'{g.user["full_name"]}님, 안전하게 로그아웃되었습니다.', 'info')
         session.clear()
-        return 'home'
+        return 'main.home'
     
     def register(self, form: SimpleRegistrationForm) -> Optional[str]:
         """회원가입 처리"""
@@ -56,7 +56,7 @@ class AuthController:
                 session.clear()
                 session['user_id'] = user_id
                 flash(f'{form.full_name.data}님, 회원가입이 완료되었습니다! 자동으로 로그인되었습니다.', 'success')
-                return 'home'
+                return 'main.home'
                 
             except ValueError as e:
                 flash(str(e), 'error')
